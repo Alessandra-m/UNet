@@ -130,27 +130,38 @@ class UNet(nn.Module):
         out = self.head(d1)
         return out
 
-    def iou(logits, masks, cls=1):
-        pred = logits.argmax(dim=1)
-        inter = ((pred == cls) & (masks == cls)).sum().item()
-        union = ((pred == cls) | (masks == cls)).sum().item()
-        return inter / union if union else 1.0
+def iou(logits, masks, cls=1):
+    pred = logits.argmax(dim=1)
+    inter = ((pred == cls) & (masks == cls)).sum().item()
+    union = ((pred == cls) | (masks == cls)).sum().item()
+    return inter / union if union else 1.0
 
 
-    @torch.no_grad()
-    def evaluate(model, dataset, loss_fn):
-        model.eval()
-        logits = model(dataset.images)
-        return loss_fn(logits, dataset.masks).item(), iou(logits, dataset.masks)
+@torch.no_grad()
+def evaluate(model, dataset, loss_fn):
+    model.eval()
+    logits = model(dataset.images)
+    return loss_fn(logits, dataset.masks).item(), iou(logits, dataset.masks)
 
 
-    def train(model, train_set, val_set, epochs, lr):
-        loder = Dataloder(train_set, batch_size=len(train_set), shuffle=True)
-        loss_fn = nn.CrossEntropyLoss()
-        optimizer = torch.optim.Adam(model.parameters(), lr=lr)
-        history = {"train": [], "val": []}
+def train(model, train_set, val_set, epochs, lr):
+    loader = Dataloder(train_set, batch_size=len(train_set), shuffle=True)
+    loss_fn = nn.CrossEntropyLoss()
+    optimizer = torch.optim.Adam(model.parameters(), lr=lr)
+    history = {"train": [], "val": []}
 
-        init_loss, _ = evaluate(model, train_set)
+    init_loss, _ = evaluate(model, train_set)
+    print(f"intial loss {init_loss:.3f} (ln {NUM_CLASSES} = {math.log(NUM_CLASSES):.3f})")
+
+    for epoch in range(1, epochs + 1):
+        model.train()
+        for images, masks in loader:
+            loss = loss_fn(model(images), masks)
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+
+        
 
 
 
@@ -158,9 +169,9 @@ class UNet(nn.Module):
 
 
 
-# def main():
-#     pass
+def main():
+    pass
 
 
-# if __name__ == "main":
-#     main()
+if __name__ == "main":
+    main()
