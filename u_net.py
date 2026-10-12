@@ -158,9 +158,9 @@ class UNet(nn.Module):
 
 
 
-def main():
-    pass
+# def main():
+#     pass
 
 
-if __name__ == "main":
-    main()
+# if __name__ == "main":
+#     main()
